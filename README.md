@@ -24,17 +24,11 @@ A powerful multithreaded command-line tool written in C# (.NET 8) that scrapes r
 - Chrome browser installed
 - [u.gg](https://u.gg) must be publicly accessible (no login required)
 
-### 🧪 Build & Run
+### 🧪 Run
+Run `LoL Matchup CLI Tool.exe` file directly:
 
 ```bash
-dotnet build
-dotnet run -- --lane mid --champs lb vlad
-```
-
-Or run the built `.exe` file directly:
-
-```bash
-LoL Matchup CLI Tool.exe --lane top --champs sett darius irelia
+LoL Matchup CLI Tool.exe gen --lane top --champs vlad darius ww
 ```
 
 ---
@@ -43,30 +37,34 @@ LoL Matchup CLI Tool.exe --lane top --champs sett darius irelia
 
 | Argument     | Description                                      | Example                      |
 |--------------|--------------------------------------------------|------------------------------|
+| `gen`        | Main Command to gen excel below it's params.     |
 | `--lane`     | Required. Lane for matchups (`top`, `jng`, `mid`, `adc`, `sup`) | `--lane mid`                |
 | `--champs`   | Required. List of champion aliases or names       | `--champs lb vlad`          |
 | `--out`      | Optional. Overwrittes deafult excel output path   | `--out "C:\mid_champs.xlsx"`|
 | `--debug`    | Optional. Enables detailed console debug logs     | `--debug`  (In Future)      |
-| `--alias`    | Optional. Displays all available aliases          | `--alias`  (In Future)      |
+| `alias`      | Command to displays all available aliases         | `--alias`                   |
 
 ---
 
 ## 📂 Output
 
 - Results are exported to `Matchups.xlsx` in the app directory.
+(Can be overwritten by providing '--out' parameter)
 - Excel file includes:
   - Champion names
   - Matchups
   - Color-coded cells for visibility
 
-Legend :<br>
-'-' - Do not pick this champ.   Winrate is below 49%.<br>
-'S' - Skill based matchup.      Winrate is between 49% and 51%.<br>
------------------- Everything past this line means this champ is good against the enemy.<br>
-'+' - Can pick this champ.      Winrate is between 51% and 53%.<br>
-'D' - Distinguished pick.       Winrate is between 53% and 55%.<br>
-'D+' - Distinguished pick plus. Winrate is between 55% and 60%.<br>
-'UD' - Ultra Distinguished.     Winrate is over 60%. (Yes there are matchups like these).<br><br>
+### 📘 Excel Legend
+
+| Symbol | Meaning                  | Winrate Range                  |
+|--------|--------------------------|-------------------------------|
+| `-`    | Do not pick this champ.  | Winrate is below 49%.         |
+| `S`    | Skill-based matchup.     | Winrate is between 49%–51%.   |
+| `+`    | Can pick this champ.     | Winrate is between 51%–53%.   |
+| `D`    | Distinguished pick.      | Winrate is between 53%–55%.   |
+| `D+`   | Distinguished pick plus. | Winrate is between 55%–60%.   |
+| `UD`   | Ultra Distinguished.     | Winrate is over 60%.          |
 
 ---
 
