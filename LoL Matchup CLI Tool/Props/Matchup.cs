@@ -1,4 +1,4 @@
-﻿namespace GetTopMachupsForGivenChamps.Props
+﻿namespace LoL_Matchup_CLI_Tool.Props
 {
     public class Matchup
     {

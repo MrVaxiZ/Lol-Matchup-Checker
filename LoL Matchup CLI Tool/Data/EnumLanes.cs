@@ -1,9 +1,9 @@
-﻿namespace GetTopMachupsForGivenChamps.Data
+﻿namespace LoL_Matchup_CLI_Tool.Data
 {
     public enum EnumLanes
     {
         Top,
-        Jng,
+        Jg,
         Mid,
         Adc,
         Sup

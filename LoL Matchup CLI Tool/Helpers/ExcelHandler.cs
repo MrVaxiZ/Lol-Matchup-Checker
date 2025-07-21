@@ -1,10 +1,10 @@
 ﻿using ClosedXML.Excel;
-using GetTopMachupsForGivenChamps.Props;
+using LoL_Matchup_CLI_Tool.Props;
 using System.Collections.Concurrent;
 
 #pragma warning disable IDE0063, IDE0290 // Fuck you IDE let me do my thing
 
-namespace GetTopMachupsForGivenChamps.Helpers
+namespace LoL_Matchup_CLI_Tool.Helpers
 {
     class ExcelHandler
     {
@@ -21,6 +21,9 @@ namespace GetTopMachupsForGivenChamps.Helpers
 
         public void CreateExcel(string path)
         {
+            if (!path.EndsWith(".xlsx"))
+                path += ".xlsx";
+
             using (var workbook = new XLWorkbook())
             {
                 var worksheet = workbook.Worksheets.Add("Matchups");
@@ -84,6 +87,8 @@ namespace GetTopMachupsForGivenChamps.Helpers
                 worksheet.Columns().AdjustToContents();
                 worksheet.SheetView.FreezeRows(2);
                 workbook.SaveAs(path);
+
+                Console.WriteLine($"Excel saved to : \n'{Path.GetFullPath(path)}'");
             }
         }
 
