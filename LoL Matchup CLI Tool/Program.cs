@@ -69,7 +69,7 @@ class App
 
             Scraper scraper = new();
 
-            HashSet<string> laneChampions = scraper.GetLaneChamps(lane);
+            HashSet<string> laneChampions = scraper.GetLaneChamps(lane).Result;
 
             string[] userChampsFixed = ParamValidator.FixAliasName(userChamps, laneChampions);
 
@@ -78,7 +78,7 @@ class App
             else
                 Console.WriteLine("Some of your provided champions were unrecognized!");
 
-            ConcurrentBag<Matchup> matchups = scraper.GetData(lane, laneChampions, userChampsFixed);
+            ConcurrentBag<Matchup> matchups = scraper.GetData(lane, laneChampions, userChampsFixed).Result;
 
             //DebugTooling.SaveDataLog(ref sw, ref matchups); // debug
 

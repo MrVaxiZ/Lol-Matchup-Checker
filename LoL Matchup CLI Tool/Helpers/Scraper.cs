@@ -1,6 +1,10 @@
-﻿using LoL_Matchup_CLI_Tool.Data;
+﻿using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Spreadsheet;
+using LoL_Matchup_CLI_Tool.Data;
 using LoL_Matchup_CLI_Tool.Props;
+using Microsoft.Playwright;
 using OpenQA.Selenium;
+using OpenQA.Selenium.BiDi.BrowsingContext;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using System.Collections.Concurrent;
@@ -10,176 +14,176 @@ namespace LoL_Matchup_CLI_Tool.Helpers
 {
     class Scraper
     {
-        internal ConcurrentBag<Matchup> GetData(EnumLanes lane, HashSet<string> Champions, string[] myChamps)
+        internal async Task<ConcurrentBag<Matchup>> GetData(EnumLanes lane, HashSet<string> champions, string[] myChamps)
         {
-            ConcurrentBag<Matchup> matchups = [];
+            ConcurrentBag<Matchup> matchups = new();
+            SemaphoreSlim throttle = new(15); // Worker Limit
 
-            var jobs = from enemy in Champions
+            var playwright = await Playwright.CreateAsync();
+            await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+            var context = await browser.NewContextAsync();
+
+            var jobs = from enemy in champions
                        from myChamp in myChamps
+                       where enemy != myChamp
                        select (ChampAgainst: enemy, ChampPlaying: myChamp);
 
-            var jobQueue = new ConcurrentQueue<(string ChampAgainst, string ChampPlaying)>(jobs);
+            List<Task> tasks = new();
 
-            int workers = 6; // 5 to 6 are safe numbers more will blow up selenium
-
-            List<Thread> threads = [];
-
-            for (int i = 0; i < workers; i++)
+            foreach (var job in jobs)
             {
-                var t = new Thread(() =>
+                tasks.Add(Task.Run(async () =>
                 {
-                    var options = CreateOptimizedOptions();
-                    using (IWebDriver driver = new ChromeDriver(options))
+                    int retries = 0;
+                    const int maxRetries = 5;
+
+                    while (retries < maxRetries)
                     {
-                        driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(20);
-                        driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+                        await throttle.WaitAsync();
+                        var page = await context.NewPageAsync();
 
-                        while (jobQueue.TryDequeue(out var job))
+                        try
                         {
-                            try
+                            string url = EndPoints.EndPointsMatches[lane]
+                                .Replace("@", job.ChampAgainst.ToLower())
+                                .Replace("#", job.ChampPlaying.ToLower());
+
+                            await page.GotoAsync(url, new() { Timeout = 20000 });
+
+                            await CheckForCookies(page);
+                            await page.EvaluateAsync("window.scrollBy(0, 100);");
+
+                            var matchesSelector = "//div[text()='Matches']/preceding-sibling::div";
+                            var matchesLocator = page.Locator(matchesSelector);
+                            string matchesText = await matchesLocator.First.InnerTextAsync();
+
+                            var winRateSelector = "//div[text()='Win Rate']/preceding-sibling::div";
+                            var winRateLocator = page.Locator(winRateSelector);
+                            string winRateText = await winRateLocator.First.InnerTextAsync();
+
+                            matchesText = matchesText.Replace(",", "").Replace(".", "");
+                            winRateText = ParamValidator.KeepOnlyDigits(winRateText);
+
+                            switch (winRateText.Length)
                             {
-                                if (job.ChampAgainst == job.ChampPlaying) { continue; }
-
-                                string url = EndPoints.EndPointsMatches[lane];
-                                url = url.Replace("@", job.ChampAgainst.ToLower());
-                                url = url.Replace("#", job.ChampPlaying.ToLower());
-                                driver.Navigate().GoToUrl(url);
-
-                                Thread.Sleep(100);
-
-                                CheckForCookies(driver);
-
-                                Thread.Sleep(100);
-
-                                ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollBy(0, 100);");
-
-                                Thread.Sleep(100);
-
-                                string matchesText = driver.FindElement(By.XPath("//div[text()='Matches']/preceding-sibling::div")).Text;
-                                string winRateText = driver.FindElement(By.XPath("//div[text()='Win Rate']/preceding-sibling::div")).Text;
-
-                                matchesText = matchesText.Replace(",", "").Replace(".", ""); // Adding ',' or '.' when num is over 999 is stupid but USA does it for some reason.
-                                winRateText = ParamValidator.KeepOnlyDigits(winRateText);
-
-                                // Making sure % is correctly parsed into double
-                                switch (winRateText.Length)
-                                {
-                                    case 2:
-                                        winRateText += ",00"; // ex. "50" + ",00" = "50,00"
-                                        break;
-                                    case 3:
-                                    case 4:
-                                        winRateText = winRateText.Insert(2, ",");
-                                        break;
-                                    default:
-                                        break;
-                                }
-
-                                Matchup matchup = new()
-                                {
-                                    ChampAgainst = job.ChampAgainst,
-                                    ChampPlaying = job.ChampPlaying,
-                                    Matches = uint.Parse(matchesText),
-                                    WinRate = Math.Round(100 - double.Parse(winRateText), 2)
-                                };
-
-                                ProccesData proccesData = new(matchup);
-
-                                matchup.Rating = proccesData.GetMatchupRating();
-                                matchups.Add(matchup);
-
-                                Console.WriteLine($"{matchup.ChampPlaying} vs {matchup.ChampAgainst} : [{matchup.WinRate}%] WR, [{matchup.Matches}] Matches");
+                                case 2: winRateText += ",00"; break;
+                                case 3:
+                                case 4: winRateText = winRateText.Insert(2, ","); break;
                             }
-                            catch (Exception ex)
+
+                            Matchup matchup = new()
                             {
-                                Console.WriteLine($"{job.ChampPlaying} vs {job.ChampAgainst}: {ex.Message}, reenquing to try again...");
-                                jobQueue.Enqueue(job); // When failed enqueue job back to try again.
-                                Thread.Sleep(100);
-                            }
+                                ChampAgainst = job.ChampAgainst,
+                                ChampPlaying = job.ChampPlaying,
+                                Matches = uint.Parse(matchesText),
+                                WinRate = Math.Round(100 - double.Parse(winRateText), 2)
+                            };
+
+                            matchup.Rating = new ProccesData(matchup).GetMatchupRating();
+                            matchups.Add(matchup);
+
+                            Console.WriteLine($"{matchup.ChampPlaying} vs {matchup.ChampAgainst} : [{matchup.WinRate}%] WR, [{matchup.Matches}] Matches");
+
+                            await page.CloseAsync();
+                            break; // success – exit retry loop
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"{job.ChampPlaying} vs {job.ChampAgainst} (try {retries + 1}/{maxRetries}): {ex.Message}");
+
+                            var screen = await page.ScreenshotAsync();
+                            string fileName = $"EXE_SS_{job.ChampPlaying}vs{job.ChampAgainst}_try{retries + 1}.png";
+                            await File.WriteAllBytesAsync(fileName, screen);
+
+                            await page.CloseAsync();
+                            await Task.Delay(1000); // delay before retry
+                            retries++;
+                        }
+                        finally
+                        {
+                            throttle.Release();
                         }
                     }
-                });
-                t.Start();
-                threads.Add(t);
+                }));
             }
 
-            foreach (var t in threads)
-                t.Join();
-
+            await Task.WhenAll(tasks);
             return matchups;
         }
 
-        internal HashSet<string> GetLaneChamps(EnumLanes lane)
+        internal async Task<HashSet<string>> GetLaneChamps(EnumLanes lane)
         {
             HashSet<string> champions = [];
 
-            using (IWebDriver driver = new ChromeDriver(CreateOptimizedOptions()))
+            var playwright = await Playwright.CreateAsync();
+            var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+            var context = await browser.NewContextAsync();
+            var page = await context.NewPageAsync();
+
+            await page.GotoAsync(EndPoints.EndPointsChamps[lane]);
+
+            await CheckForCookies(page);
+
+            await Scroll(page, 2000);
+
+            var champRows = GetRowsAsync(page);
+
+            for (int i = 0; i < champRows.Result.Count; i++)
             {
-                try
-                {
-                    driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(10);
-                    driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+                ILocator nameElem = champRows.Result[i].Locator("strong.champion-name");
+                string name = await nameElem.InnerTextAsync();
+                champions.Add(name);
 
-                    string url = EndPoints.EndPointsChamps[lane];
-                    driver.Navigate().GoToUrl(url);
-
-                    CheckForCookies(driver);
-
-                    ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollBy(0, 100);");
-
-                    Thread.Sleep(1000);
-
-                    var champRows = GetRows(driver);
-
-                    for (int i = 0; i < champRows.Count; i++)
-                    {
-                        var nameElement = champRows[i].FindElement(By.CssSelector("strong.champion-name"));
-                        string name = (string)((IJavaScriptExecutor)driver).ExecuteScript("return arguments[0].innerText;", nameElement);
-                        champions.Add(name);
-
-                        Console.WriteLine($"[{i}] Found champion : '{name}'");
-                    }
-
-                    if (champions.Count > 0)
-                    {
-                        return champions;
-                    }
-                    else
-                    {
-                        return [];
-                    }
-                }
-                catch (Exception ex)
-                {
-                    HandleCrash(driver, ex);
-                }
+                Console.WriteLine($"[{i}] Found champion : '{name}'");
             }
 
-            return [];
+            if (champions.Count > 0)
+            {
+                return champions;
+            }
+            else
+            {
+                return [];
+            }
         }
 
-        private ReadOnlyCollection<IWebElement> GetRows(IWebDriver driver)
+        private async Task Scroll(IPage page, ushort value)
+        {
+            await page.EvaluateAsync($"window.scrollBy(0, {value});");
+        }
+
+        private async Task<IReadOnlyList<ILocator>> GetRowsAsync(IPage page)
         {
             try
             {
-                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
-                wait.Until(drv => drv.FindElements(By.CssSelector("div.rt-tr-group")).Count > 0);
+                // Wait until rows are loaded
+                await page.WaitForSelectorAsync("div.rt-tr-group", new() { Timeout = 5000 });
 
-                ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollBy(0, 2000);");
-                Thread.Sleep(500);
+                // Scroll to bottom to force-load everything
+                await page.EvaluateAsync("window.scrollBy(0, 2000);");
+                await Task.Delay(500); // optional small pause if you observe lazy-load
 
-                // Get all rows
-                ReadOnlyCollection<IWebElement> rankRows = driver.FindElements(By.CssSelector("div.rt-tr-group"));
+                // Get all row locators
+                var rows = page.Locator("div.rt-tr-group");
+                int rowCount = await rows.CountAsync();
 
-                Console.WriteLine($"Found total of [{rankRows.Count}] champions.");
-                return rankRows;
+                Console.WriteLine($"Found total of [{rowCount}] champions.");
+
+                // Return as a list of individual locators
+                List<ILocator> result = new();
+                for (int i = 0; i < rowCount; ++i)
+                    result.Add(rows.Nth(i));
+
+                return result;
             }
-            catch (Exception ex)
+            catch (PlaywrightException ex)
             {
-                HandleCrash(driver, ex);
-                return null;
+                Console.WriteLine($"[ERROR] Failed to get rows: {ex.Message}");
+                return [];
             }
         }
+
 
         private void HandleCrash(IWebDriver driver, Exception ex)
         {
@@ -243,38 +247,29 @@ namespace LoL_Matchup_CLI_Tool.Helpers
             try { driver.Dispose(); } catch { }
         }
 
-        private ChromeOptions CreateOptimizedOptions()
-        {
-            var options = new ChromeOptions();
-            options.AddArgument("--headless=new");
-            options.AddArgument("--disable-gpu");
-            options.AddArgument("--no-sandbox");
-            options.AddArgument("--use-gl=swiftshader");
-            options.AddArgument("--blink-settings=imagesEnabled=false");
-            options.AddArgument("--disable-dev-shm-usage");
-            options.AddArgument("--disable-background-timer-throttling");
-            options.AddArgument("--disable-backgrounding-occluded-windows");
-            options.AddArgument("--disable-renderer-backgrounding");
-            options.AddArgument("--enable-unsafe-swiftshader");
-            options.PageLoadStrategy = PageLoadStrategy.Eager;
-            return options;
-        }
-
-        private void CheckForCookies(IWebDriver driver)
+        private async Task CheckForCookies(IPage page)
         {
             try
             {
-                var consentBtn = driver.FindElement(By.CssSelector("button.fc-button.fc-cta-consent"));
-                if (consentBtn.Displayed && consentBtn.Enabled)
+                var consentButton = page.Locator("button.fc-button.fc-cta-consent");
+
+                if (await consentButton.IsVisibleAsync())
                 {
-                    consentBtn.Click();
-                    Thread.Sleep(100);
+                    await consentButton.ClickAsync();
                     Console.WriteLine("Cookies Accepted!");
                 }
+                else
+                {
+                    Console.WriteLine("No Cookies to click!");
+                }
             }
-            catch (NoSuchElementException)
+            catch (TimeoutException)
             {
-                Console.WriteLine("No Cookies to click!");
+                Console.WriteLine("Cookies: timeout — button never appeared.");
+            }
+            catch (PlaywrightException ex)
+            {
+                Console.WriteLine($"[WARN] Cookie click failed : {ex.Message}");
             }
         }
     }

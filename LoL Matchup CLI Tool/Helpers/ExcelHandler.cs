@@ -31,11 +31,6 @@ namespace LoL_Matchup_CLI_Tool.Helpers
                 // Header row
                 worksheet.Cell(2, 1).Value = "Champion Against";
 
-                for (int i = 2; i < MyChamps.Length + 2; i++)
-                {
-                    worksheet.Cell(1, i).Value = MyChamps[i - 2];
-                }
-
                 List<ChampionMatchup> championMatchupList = [];
                 string[] sortedChampions = LineChamps.OrderBy(x => x).ToArray(); // Sort Alphabetically
 
