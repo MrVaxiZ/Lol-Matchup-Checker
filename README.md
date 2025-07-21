@@ -45,20 +45,28 @@ LoL Matchup CLI Tool.exe --lane top --champs sett darius irelia
 |--------------|--------------------------------------------------|------------------------------|
 | `--lane`     | Required. Lane for matchups (`top`, `jng`, `mid`, `adc`, `sup`) | `--lane mid`                |
 | `--champs`   | Required. List of champion aliases or names       | `--champs lb vlad`          |
-| `--open`     | Optional. Open each matchup in browser (Chrome)   | `--open`                    |
-| `--debug`    | Optional. Enables detailed console debug logs     | `--debug`                   |
-| `--alias`    | Optional. Displays all available aliases          | `--alias`                   |
+| `--out`      | Optional. Overwrittes deafult excel output path   | `--out "C:\mid_champs.xlsx"`|
+| `--debug`    | Optional. Enables detailed console debug logs     | `--debug`  (In Future)      |
+| `--alias`    | Optional. Displays all available aliases          | `--alias`  (In Future)      |
 
 ---
 
 ## 📂 Output
 
-- Results are exported to `Results_<lane>.xlsx` in the app directory.
+- Results are exported to `Matchups.xlsx` in the app directory.
 - Excel file includes:
   - Champion names
-  - Matchup winrates (%)
-  - Number of matches
+  - Matchups
   - Color-coded cells for visibility
+
+Legends :
+'-' - Do not pick this champ.   Winrate is below 49%.
+'S' - Skill based matchup.      Winrate is between 49% and 51%.
+------------------ Everything past this line means this champ is good against the enemy.
+'+' - Can pick this champ.      Winrate is between 51% and 53%.
+'D' - Distinguished pick.       Winrate is between 53% and 55%.
+'D+' - Distinguished pick plus. Winrate is between 55% and 60%.
+'UD' - Ultra Distinguished.     Winrate is over 60%. (Yes there are matchups like these).
 
 ---
 
@@ -70,24 +78,25 @@ LoL Matchup CLI Tool.exe --lane top --champs darius sett riven
 
 Expected output:
 - Creates an Excel file with matchup data for each of those champions vs all meta top laners.
-- Stats include win rate and match count pulled directly from u.gg.
+- Matchup ratings are based on win rate and match count pulled directly from u.gg.
 
 ---
 
 ## 🗃️ File Structure
 
 ```
-/GetTopMachupsForGivenChamps
+/LoL Matchup CLI Tool
+├── /Data
+|   └── EndPoints.cs
+|   └── EnumLanes.cs
+|   └── Aliases.cs
 ├── /Props
 │   └── Matchup.cs
+|   └── ExcelHandler.cs
 ├── /Helpers
 │   └── ExcelHandler.cs
+|   └── Validator.cs
 ├── Program.cs
-├── MatchupScraper.cs
-├── StaticVars.cs
-├── Logger.cs
-├── LoL Matchup CLI Tool.exe
-└── Result_<lane>.xlsx
 ```
 
 ---
@@ -118,7 +127,7 @@ This project is released under the MIT License. Do whatever you want with it, bu
 ## 👤 Author
 
 Made by [MrVaxiZ](https://github.com/MrVaxiZ)  
-Inspired by the need for fast, accurate matchup prep for ranked.
+Inspired by the need for accurate matchup prep for ranked games.
 
 ---
 
