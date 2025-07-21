@@ -59,14 +59,14 @@ LoL Matchup CLI Tool.exe --lane top --champs sett darius irelia
   - Matchups
   - Color-coded cells for visibility
 
-Legends :
-'-' - Do not pick this champ.   Winrate is below 49%.
-'S' - Skill based matchup.      Winrate is between 49% and 51%.
------------------- Everything past this line means this champ is good against the enemy.
-'+' - Can pick this champ.      Winrate is between 51% and 53%.
-'D' - Distinguished pick.       Winrate is between 53% and 55%.
-'D+' - Distinguished pick plus. Winrate is between 55% and 60%.
-'UD' - Ultra Distinguished.     Winrate is over 60%. (Yes there are matchups like these).
+Legend :<br>
+'-' - Do not pick this champ.   Winrate is below 49%.<br>
+'S' - Skill based matchup.      Winrate is between 49% and 51%.<br>
+------------------ Everything past this line means this champ is good against the enemy.<br>
+'+' - Can pick this champ.      Winrate is between 51% and 53%.<br>
+'D' - Distinguished pick.       Winrate is between 53% and 55%.<br>
+'D+' - Distinguished pick plus. Winrate is between 55% and 60%.<br>
+'UD' - Ultra Distinguished.     Winrate is over 60%. (Yes there are matchups like these).<br><br>
 
 ---
 
