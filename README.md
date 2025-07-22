@@ -37,12 +37,12 @@ LoL Matchup CLI Tool.exe gen --lane top --champs vlad darius ww
 
 | Argument     | Description                                      | Example                      |
 |--------------|--------------------------------------------------|------------------------------|
-| `gen`        | Main Command to gen excel below it's params.     |
+| `gen`        | Main Command to gen excel below it's params.     |  `gen`  
 | `--lane`     | Required. Lane for matchups (`top`, `jng`, `mid`, `adc`, `sup`) | `--lane mid`                |
 | `--champs`   | Required. List of champion aliases or names       | `--champs lb vlad`          |
 | `--out`      | Optional. Overwrittes deafult excel output path   | `--out "C:\mid_champs.xlsx"`|
 | `--debug`    | Optional. Enables detailed console debug logs     | `--debug`  (In Future)      |
-| `alias`      | Command to displays all available aliases         | `--alias`                   |
+| `alias`      | Command to displays all available aliases         | `alias`                   |
 
 ---
 
