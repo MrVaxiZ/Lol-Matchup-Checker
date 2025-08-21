@@ -17,6 +17,7 @@
             { "gp", "Gangplank" },
             { "heca", "Hecarim" },
             { "jarvan", "Jarvan IV" },
+            { "j4", "Jarvan IV"},
             { "kaisa", "Kai'Sa" },
             { "robal", "Kha'Zix" },
             { "kog", "Kog'Maw" },

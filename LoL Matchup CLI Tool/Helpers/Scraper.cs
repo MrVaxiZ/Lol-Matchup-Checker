@@ -41,8 +41,8 @@ namespace LoL_Matchup_CLI_Tool.Helpers
                                 if (job.ChampAgainst == job.ChampPlaying) { continue; }
 
                                 string url = EndPoints.EndPointsMatches[lane];
-                                url = url.Replace("@", job.ChampAgainst.ToLower());
-                                url = url.Replace("#", job.ChampPlaying.ToLower());
+                                url = url.Replace("@", FixChampionEndPoint(job.ChampAgainst));
+                                url = url.Replace("#", FixChampionEndPoint(job.ChampPlaying));
                                 driver.Navigate().GoToUrl(url);
 
                                 Thread.Sleep(100);
@@ -276,6 +276,70 @@ namespace LoL_Matchup_CLI_Tool.Helpers
             {
                 Console.WriteLine("No Cookies to click!");
             }
+        }
+
+        private string FixChampionEndPoint(string champ)
+        {
+            const string SCN1 = "Master Yi";
+            const string ASCN1 = "masteryi";
+            const string SCN2 = "Bel'Veth";
+            const string ASCN2 = "belveth";
+            const string SCN3 = "Kha'Zix";
+            const string ASCN3 = "khazix";
+            const string SCN4 = "Jarvan IV";
+            const string ASCN4 = "jarvaniv";
+            const string SCN5 = "Rek'Sai";
+            const string ASCN5 = "reksai";
+            const string SCN6 = "Nunu & Willump";
+            const string ASCN6 = "nunu";
+            const string SCN7 = "Dr. Mundo";
+            const string ASCN7 = "drmundo";
+            const string SCN8 = "Lee Sin";
+            const string ASCN8 = "drmundo";
+            const string SCN9 = "Xin Zhao";
+            const string ASCN9 = "xinzhao";
+            const string SCN10 = "Kog'Maw";
+            const string ASCN10 = "kogmaw";
+            const string SCN11 = "Kai'Sa";
+            const string ASCN11 = "kaisa";
+            const string SCN12 = "Miss Fortune";
+            const string ASCN12 = "missfortune";
+            const string SCN13 = "Renata Glasc";
+            const string ASCN13 = "renata";
+            const string SCN14 = "Tahm Kench";
+            const string ASCN14 = "tahmkench";
+            const string SCN15 = "K'Sante";
+            const string ASCN15 = "ksante";
+            const string SCN16 = "Vel'Koz";
+            const string ASCN16 = "velkoz";
+            const string SCN17 = "Twisted Fate";
+            const string ASCN17 = "twistedfate";
+            const string SCN18 = "Cho'Gath";
+            const string ASCN18 = "chogath";
+            const string SCN19 = "Aurelion Sol";
+            const string ASCN19 = "aurelionsol";
+
+
+            if (champ == SCN1) { return ASCN1; }
+            else if (champ == SCN2) { return ASCN2; }
+            else if (champ == SCN3) { return ASCN3; }
+            else if (champ == SCN4) { return ASCN4; }
+            else if (champ == SCN5) { return ASCN5; }
+            else if (champ == SCN6) { return ASCN6; }
+            else if (champ == SCN7) { return ASCN7; }
+            else if (champ == SCN8) { return ASCN8; }
+            else if (champ == SCN9) { return ASCN9; }
+            else if (champ == SCN10) { return ASCN10; }
+            else if (champ == SCN11) { return ASCN11; }
+            else if (champ == SCN12) { return ASCN12; }
+            else if (champ == SCN13) { return ASCN13; }
+            else if (champ == SCN14) { return ASCN14; }
+            else if (champ == SCN15) { return ASCN15; }
+            else if (champ == SCN16) { return ASCN16; }
+            else if (champ == SCN17) { return ASCN17; }
+            else if (champ == SCN18) { return ASCN18; }
+            else if (champ == SCN19) { return ASCN19; }
+            else { return champ; }
         }
     }
 }

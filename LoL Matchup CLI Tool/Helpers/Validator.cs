@@ -66,16 +66,31 @@ namespace LoL_Matchup_CLI_Tool.Helpers
 
             for (int i = 0; i < userChamps.Length; ++i)
             {
-                string fullChampName = Aliases.ChampAliases[userChamps[i]];
+                try
+                {
+                    string fullChampName = Aliases.ChampAliases[userChamps[i]];
 
-                if (laneChampions.Any(x => x.Equals(fullChampName, StringComparison.CurrentCultureIgnoreCase)))
-                {
-                    userChampsFixed[i] = fullChampName;
+                    if (laneChampions.Any(x => x.Equals(fullChampName, StringComparison.CurrentCultureIgnoreCase)))
+                    {
+                        userChampsFixed[i] = fullChampName;
+                    }
+                    else
+                    {
+                        userChampsFixed[i] = userChamps[i];
+                    }
                 }
-                else
+                catch (Exception)
                 {
-                    userChampsFixed[i] = userChamps[i];
+                    if (!char.IsUpper(userChamps[i][0]))
+                    {
+                        userChampsFixed[i] = char.ToUpper(userChamps[i][0]) + userChamps[i].Remove(0, 1);
+                    }
+                    else
+                    {
+                        userChampsFixed[i] = userChamps[i];
+                    }
                 }
+
             }
             return userChampsFixed;
         }
