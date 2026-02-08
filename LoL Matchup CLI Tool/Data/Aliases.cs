@@ -20,6 +20,7 @@
             { "j4", "Jarvan IV"},
             { "kaisa", "Kai'Sa" },
             { "robal", "Kha'Zix" },
+            { "robak", "Kha'Zix" },
             { "kog", "Kog'Maw" },
             { "miss", "Miss Fortune" },
             { "yi", "Master Yi" },
@@ -36,6 +37,7 @@
             { "velkoz", "Vel'Koz" },
             { "ww", "Warwick" },
             { "xin", "Xin Zhao" },
+            { "lee", "Lee Sin" },
             //{ "", "" },
         };
     }

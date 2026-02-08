@@ -34,10 +34,10 @@ class App
         { IsRequired = true, AllowMultipleArgumentsPerToken = true };
 
         var laneOption = new Option<string>(
-            name: "--lane",
+            ["--lane", "--role"],
             description: "Lane you want matchups for (e.g. top, mid, jg)."
         )
-        { IsRequired = true };
+        { IsRequired = false };
 
         var outputOption = new Option<string>(
             name: "--out",
@@ -59,7 +59,7 @@ class App
 
         var generateCommand = new Command("gen",
             "Main command that generates Excel file filled with matchups.\n" +
-            "Usage : 'LoL Matchup CLI Tool.exe' gen --lane mid --champs vlad lb'");
+            "Usage : 'LoL Matchup CLI Tool.exe' gen --lane mid --champs vlad lb' (you can also use '--role' instad of '--role')");
         generateCommand.AddOption(champOption);
         generateCommand.AddOption(laneOption);
         generateCommand.AddOption(outputOption);
@@ -77,6 +77,9 @@ class App
                 Console.WriteLine("All champions were recognized!");
             else
                 Console.WriteLine("Some of your provided champions were unrecognized!");
+
+            if (userChampsFixed.Contains("Shaco"))
+                Console.WriteLine("Kill yourself for playing this champion"); // That is not a request that's an order.
 
             ConcurrentBag<Matchup> matchups = scraper.GetData(lane, laneChampions, userChampsFixed);
 

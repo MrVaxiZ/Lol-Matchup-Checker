@@ -10,6 +10,8 @@ namespace LoL_Matchup_CLI_Tool.Helpers
 {
     class Scraper
     {
+        byte FailCounter = 0; // If it fails more than 20 then surely something is broken.
+
         internal ConcurrentBag<Matchup> GetData(EnumLanes lane, HashSet<string> Champions, string[] myChamps)
         {
             ConcurrentBag<Matchup> matchups = [];
@@ -89,11 +91,22 @@ namespace LoL_Matchup_CLI_Tool.Helpers
                                 matchups.Add(matchup);
 
                                 Console.WriteLine($"{matchup.ChampPlaying} vs {matchup.ChampAgainst} : [{matchup.WinRate}%] WR, [{matchup.Matches}] Matches");
+                                FailCounter = 0;
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"{job.ChampPlaying} vs {job.ChampAgainst}: {ex.Message}, reenquing to try again...");
-                                jobQueue.Enqueue(job); // When failed enqueue job back to try again.
+                                //++FailCounter;
+                                if (FailCounter < 20)
+                                {
+                                    Console.WriteLine($"{job.ChampPlaying} vs {job.ChampAgainst}: {ex.Message}, FAILED attempt [{FailCounter}], reenquing to try again...");
+
+                                    jobQueue.Enqueue(job); // When failed enqueue job back to try again unless it is failing for more than 20 times.
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"{job.ChampPlaying} vs {job.ChampAgainst}: Impossible to get tried over 20 times. Skipping...");
+                                }
+
                                 Thread.Sleep(100);
                             }
                         }
@@ -295,7 +308,7 @@ namespace LoL_Matchup_CLI_Tool.Helpers
             const string SCN7 = "Dr. Mundo";
             const string ASCN7 = "drmundo";
             const string SCN8 = "Lee Sin";
-            const string ASCN8 = "drmundo";
+            const string ASCN8 = "leesin";
             const string SCN9 = "Xin Zhao";
             const string ASCN9 = "xinzhao";
             const string SCN10 = "Kog'Maw";
