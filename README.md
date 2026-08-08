@@ -1,5 +1,9 @@
 # LoL Matchup CLI Tool
 
+UPDATE :: Why is it NOT working? :
+Since some time now u.gg stated to use claudflare which prevents my scraper from working I will have to fully remake it in order for this to work again.  
+
+
 A powerful multithreaded command-line tool written in C# (.NET 8) that scrapes real-time matchup data from [u.gg](https://u.gg) and exports it into a well-formatted Excel spreadsheet. The tool is designed to assist League of Legends players in understanding champion matchups based on winrates and pick data.
 
 ---
