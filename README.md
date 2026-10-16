@@ -1,5 +1,6 @@
 # LoL Matchup CLI Tool
 
+USE "Lol-Matchup-Checker_v2" instead of this one!
 UPDATE :: Why is it NOT working? :
 Since some time now u.gg stated to use claudflare which prevents my scraper from working I will have to fully remake it in order for this to work again.  
 
