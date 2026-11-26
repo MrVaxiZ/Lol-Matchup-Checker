@@ -155,7 +155,7 @@ After `pip install -e .` the shortcuts `lol-matchup`, `lol-counters` and `lol-ma
 <summary><b>Build the .exe</b></summary>
 
 - **On your PC:** double-click **`build_exe.cmd`**. It produces `dist\LoL Matchup Checker.exe` and runs a self-test.
-- **Automatically:** push a tag like `v2.1.0`. GitHub Actions (`.github/workflows/build-exe.yml`) builds the exe on Windows and attaches it to the release as `LoL-Matchup-Checker.exe`, which is the file the download link above points to.
+- **Publish a release:** commit your changes, then double-click **`release.cmd`** and type the new version (e.g. `2.1.0`). It updates the version number, commits, tags and pushes. GitHub Actions (`.github/workflows/build-exe.yml`) then builds the exe on Windows, writes the release notes (download section, your commit messages since the last version, a checksum) and publishes the release as `LoL-Matchup-Checker.exe`, which is the file the download link above points to.
 
 The icon is drawn by `packaging/make_icon.py`. `"LoL Matchup Checker.exe" --selftest` writes `selftest.txt` listing what was bundled.
 </details>
@@ -199,6 +199,7 @@ Run the tests with `pip install pytest` and then `pytest`.
   <sub>Not affiliated with Riot Games or u.gg. Champion icons © Riot Games.</sub>
 </p>
 
+<!-- TODO: replace # below with your Buy Me a Coffee link, e.g. https://buymeacoffee.com/yourname -->
 <p align="center">
-  <sub>☕ If you enjoy the app and would like to support me, <a href="https://buymeacoffee.com/vaxiz"><b>buy me a coffee</b></a>! 💛✨</sub>
+  <sub>☕ If you enjoy the app and would like to support me, <a href="#"><b>buy me a coffee</b></a>! 💛✨</sub>
 </p>

@@ -55,7 +55,10 @@ C = {
 LANES = [("top", "TOP"), ("jg", "JUNGLE"), ("mid", "MID"), ("adc", "ADC"), ("sup", "SUPPORT")]
 DDRAGON = "https://ddragon.leagueoflegends.com"
 
-SUPPORT_URL = "https://buymeacoffee.com/vaxiz"
+# TODO: put your "Buy me a coffee" page here, e.g. "https://buymeacoffee.com/yourname".
+# While it's empty the line is still shown, but clicking it does nothing.
+SUPPORT_URL = ""
+
 
 def _cache_dir() -> Path:
     from .cache import app_data_dir
@@ -652,7 +655,8 @@ class App:
             self._home_logo = logo.subsample(2) if self.scale < 1.5 else logo  # 128 px, 256 on high-DPI
             tk.Label(wrap, image=self._home_logo, bg=C["bg"]).pack(pady=(0, self.px(10)))
         tk.Label(wrap, text="LoL MATCHUP CHECKER", font=self.f["title"], fg=C["gold"], bg=C["bg"]).pack()
-        tk.Label(wrap, text="Data from u.gg  ·  icons from Riot Data Dragon", font=self.f["body"],
+        from . import __version__
+        tk.Label(wrap, text=f"v{__version__}  ·  data from u.gg  ·  icons from Riot Data Dragon", font=self.f["body"],
                  fg=C["muted"], bg=C["bg"]).pack(pady=(self.px(4), self.px(36)))
 
         cards = tk.Frame(wrap, bg=C["bg"])

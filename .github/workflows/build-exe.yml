@@ -1,0 +1,64 @@
+# Builds "LoL-Matchup-Checker.exe" on Windows and publishes a GitHub release.
+# - Run release.cmd (or push a tag like v2.1.0): builds the exe, writes the release notes
+#   (download section + what changed since the last version + checksum) and publishes the release.
+#   The README's download link always points at the newest release.
+# - Or run it by hand from the Actions tab: only builds, the exe is kept as a downloadable artifact.
+name: Build exe
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed to create the release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # full history + tags, for "what changed since the last version"
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip pyinstaller
+          python -m pip install -r requirements.txt
+
+      - name: Build
+        run: python -m PyInstaller --noconfirm --clean --distpath dist --workpath build packaging/LoLMatchupChecker.spec
+
+      - name: Self-test
+        shell: pwsh
+        run: |
+          Start-Process -Wait -FilePath "dist\LoL Matchup Checker.exe" -ArgumentList "--selftest"
+          Get-Content dist\selftest.txt
+          if (-not (Select-String -Path dist\selftest.txt -Pattern "ALL OK" -Quiet)) { exit 1 }
+
+      - name: Rename for download
+        shell: pwsh
+        run: Copy-Item "dist\LoL Matchup Checker.exe" "dist\LoL-Matchup-Checker.exe"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: LoL-Matchup-Checker
+          path: dist/LoL-Matchup-Checker.exe
+
+      - name: Write release notes
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: bash packaging/release_notes.sh "${GITHUB_REF_NAME}" dist/LoL-Matchup-Checker.exe > release_notes.md
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          name: LoL Matchup Checker ${{ github.ref_name }}
+          body_path: release_notes.md
+          files: dist/LoL-Matchup-Checker.exe
+          make_latest: true
