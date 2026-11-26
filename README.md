@@ -200,5 +200,5 @@ Run the tests with `pip install pytest` and then `pytest`.
 </p>
 
 <p align="center">
-  <sub>☕ If you enjoy the app and would like to support me, <a href="[#](https://buymeacoffee.com/vaxiz?new=1)"><b>buy me a coffee</b></a>! 💛✨</sub>
+  <sub>☕ If you enjoy the app and would like to support me, <a href="#https://buymeacoffee.com/vaxiz?new=1"><b>buy me a coffee</b></a>! 💛✨</sub>
 </p>
