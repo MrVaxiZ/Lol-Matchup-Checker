@@ -9,7 +9,7 @@ set -euo pipefail
 
 TAG="$1"
 EXE="$2"
-REPO="https://github.com/MrVaxiZ/Lol-Matchup-Checker"
+REPO="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-MrVaxiZ/Lol-Matchup-Checker_v2}"  # the repo this runs in
 SUPPORT_URL="https://buymeacoffee.com/vaxiz"
 
 PREV="$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)"

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MrVaxiZ/Lol-Matchup-Checker/releases/latest/download/LoL-Matchup-Checker.exe"><b>⬇ Download for Windows</b></a>
+  <a href="https://github.com/MrVaxiZ/Lol-Matchup-Checker_v2/releases/latest/download/LoL-Matchup-Checker.exe"><b>⬇ Download for Windows</b></a>
   &nbsp;·&nbsp; <a href="#-how-to-use">How to use</a>
   &nbsp;·&nbsp; <a href="#-ratings">Ratings</a>
   &nbsp;·&nbsp; <a href="#-faq">FAQ</a>
@@ -22,7 +22,7 @@
 
 **You only need one file.**
 
-1. Download **[LoL-Matchup-Checker.exe](https://github.com/MrVaxiZ/Lol-Matchup-Checker/releases/latest/download/LoL-Matchup-Checker.exe)**.
+1. Download **[LoL-Matchup-Checker.exe](https://github.com/MrVaxiZ/Lol-Matchup-Checker_v2/releases/latest/download/LoL-Matchup-Checker.exe)**.
 2. Double-click it.
 
 No Python and nothing else to install. The first time you press **START**, the app downloads the browser it needs (one time, about 150 MB) and shows the progress in its terminal.
@@ -112,8 +112,8 @@ By default, only champions picked in at least 0.5% of that lane's games are chec
 Needs Python 3.10+.
 
 ```bash
-git clone https://github.com/MrVaxiZ/Lol-Matchup-Checker
-cd Lol-Matchup-Checker
+git clone https://github.com/MrVaxiZ/Lol-Matchup-Checker_v2
+cd Lol-Matchup-Checker_v2
 pip install -r requirements.txt
 scrapling install          # one-time browser download
 ```
