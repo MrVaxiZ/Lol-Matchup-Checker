@@ -7,7 +7,7 @@ if exist "Matchups.xlsx" (
 )
 
 echo Running matchup checker...
-python -m lol_matchup_checker gen --lane jg --champs elise j4
+python -m lol_matchup_checker gen --lane jg --champs elise j4 robal sylas
 
 echo Waiting 3 seconds...
 timeout /t 3 /nobreak >nul

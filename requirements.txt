@@ -1,2 +1,5 @@
-scrapling[fetchers]>=0.4.15
-openpyxl>=3.1
+# Run from source:  pip install -r requirements.txt  then  scrapling install  (one-time browser download)
+# Not needed for the .exe, which has everything built in.
+scrapling[fetchers]>=0.4.15   # u.gg scraping through Cloudflare (stealth browser)
+openpyxl>=3.1                 # Excel export
+Pillow>=10                    # sharp champion icons in the app (optional, the app works without it)

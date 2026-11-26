@@ -51,6 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
                      help="Use your installed Google Chrome instead of Scrapling's bundled Chromium.")
     gen.add_argument("--browser-path", help="Path to a specific Chromium/Chrome executable.")
     gen.add_argument("--no-block-ads", action="store_true", help="Don't block ad/tracker requests.")
+    gen.add_argument("--no-cache", action="store_true",
+                     help="Scrape every page again instead of reusing results saved earlier on this patch.")
+    gen.add_argument("--cache-hours", type=float, default=24.0, metavar="HOURS",
+                     help="Reuse saved results up to this old (default: 24).")
     gen.add_argument("--debug", action="store_true",
                      help="Verbose logs; saves the HTML of pages that failed into ./debug.")
 
@@ -64,7 +68,8 @@ def cmd_alias() -> int:
     return 0
 
 
-async def cmd_gen(args: argparse.Namespace) -> int:
+async def cmd_gen(args: argparse.Namespace, collect: dict | None = None) -> int:
+    """`collect`, if given, receives the results (used by the GUI)."""
     started = time.monotonic()
     lane = LANE_INPUTS[args.lane]
     options = ScraperOptions(
@@ -78,6 +83,7 @@ async def cmd_gen(args: argparse.Namespace) -> int:
         debug=args.debug,
         patch=args.patch,
         min_pick_rate=max(0.0, args.min_pick_rate),
+        use_cache=not args.no_cache, cache_hours=max(0.0, args.cache_hours),
     )
 
     print(f"Patch: {args.patch}" if args.patch else "Patch: latest")
@@ -130,6 +136,9 @@ async def cmd_gen(args: argparse.Namespace) -> int:
 
     path = write_excel(args.out, my_champs, lane_champs, matchups, patch_label=patch_label)
     print(f"Excel saved to : \n'{path}'")
+    if collect is not None:
+        collect.update(lane=lane, my_champs=my_champs, lane_champs=lane_champs, matchups=matchups,
+                       failures=failures, patch=patch_label, excel=path)
 
     if failures:
         print(f"{len(failures)} matchup(s) could not be scraped and are marked N/A:")

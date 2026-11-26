@@ -1,133 +1,205 @@
-# LoL Matchup CLI Tool
+<p align="center">
+  <img src="lol_matchup_checker/assets/icon.png" width="120" alt="LoL Matchup Checker icon">
+</p>
 
-A command-line tool that scrapes champion matchup win rates from [u.gg](https://u.gg) and exports them into a colour-coded Excel spreadsheet, so you can see at a glance which of your champions to pick into each enemy laner.
+<h1 align="center">LoL Matchup Checker</h1>
 
-**v2 is a rewrite in Python on top of [Scrapling](https://github.com/D4Vinci/Scrapling).** u.gg started putting pages behind Cloudflare, which broke the old Selenium/C# version. Scrapling's stealth browser gets through Cloudflare's checks (and solves Turnstile challenges when they show up), so the tool works again.
+<p align="center">
+  <b>Find who counters your enemy, or see how your champions do against every laner.</b><br>
+  Live win rates from <a href="https://u.gg">u.gg</a>, colour-coded and saved to Excel.
+</p>
+
+<p align="center">
+  <a href="https://github.com/MrVaxiZ/Lol-Matchup-Checker/releases/latest/download/LoL-Matchup-Checker.exe"><b>⬇ Download for Windows</b></a>
+  &nbsp;·&nbsp; <a href="#-how-to-use">How to use</a>
+  &nbsp;·&nbsp; <a href="#-ratings">Ratings</a>
+  &nbsp;·&nbsp; <a href="#-faq">FAQ</a>
+</p>
 
 ---
 
-## 💡 Features
+## ⚡ Get started
 
-- 🛡️ Gets through u.gg's Cloudflare protection using Scrapling's `AsyncStealthySession`.
-- ⚡ Parallel scraping in one browser with several tabs (`--workers`, default 4).
-- 🔎 Reads the champion list for your lane straight from the u.gg tier list.
-- 🧠 Champion aliases and forgiving name matching (`vlad`, `VLADIMIR`, `ksante`, `k'sante` all work).
-- 📊 Excel export with the same layout and colour legend as before, plus a **Raw Data** sheet and hover comments with the exact win rate and match count.
-- ♻️ Per-page retries; Cloudflare's solver is only switched on for pages that actually show a challenge.
-- 🛠️ `--debug` saves the HTML of pages that failed so you can see what u.gg returned.
+**You only need one file.**
+
+1. Download **[LoL-Matchup-Checker.exe](https://github.com/MrVaxiZ/Lol-Matchup-Checker/releases/latest/download/LoL-Matchup-Checker.exe)**.
+2. Double-click it.
+
+No Python and nothing else to install. The first time you press **START**, the app downloads the browser it needs (one time, about 150 MB) and shows the progress in its terminal.
+
+> **"Windows protected your PC"?** Click **More info → Run anyway**. Windows shows this for any app that isn't code-signed.
 
 ---
 
-## 🚀 Quick Start
+## 🎮 How to use
 
-### 🔧 Requirements
+| | |
+|---|---|
+| **1. Pick a mode** | **Find counters**: who beats an enemy champion. **Matchup sheet**: your champions vs every laner. |
+| **2. Pick a lane** | Top, Jungle, Mid, ADC or Support. *Counters* also has **Auto** (the role the champion is played in most). |
+| **3. Pick champions** | Click the icons, or type to search (`j4`, `robal`, `ksante` work too) and press **Enter**. |
+| **4. Press START** | Watch the progress, the time left and the log. **Stop** cancels the run. |
+| **5. Read the results** | Click a rating like **D+** to highlight only those; click it again to show all. **Open Excel** opens the saved file. |
 
-- Python 3.10+
+- **Remember my picks** keeps your champions and settings for next time.
+- Results are saved, so running again on the same patch only loads what's new.
+- Excel files go to **Documents\LoL Matchup Checker**.
 
-### 📦 Install
+---
+
+## 🎨 Ratings
+
+Your win rate in the matchup:
+
+| Rating | Meaning | Win rate |
+|:---:|---|:---:|
+| 🟥 `-` | Don't pick | below 49% |
+| 🟨 `S` | Skill matchup | 49–51% |
+| 🟩 `+` | Good pick | 51–53% |
+| 🟢 `D` | Distinguished | 53–55% |
+| 🔵 `D+` | Distinguished plus | 55–60% |
+| 🟣 `UD` | Ultra distinguished | 60%+ |
+
+Matchups with few games (under 100 by default) are shown greyed out, because there isn't enough data to trust them.
+
+---
+
+## ❓ FAQ
+
+<details>
+<summary><b>It's stuck on "Opening u.gg" / pages keep failing</b></summary>
+
+u.gg sits behind Cloudflare. Tick **Show browser** (or **Use my Chrome**) and/or lower **Tabs** to 2, then try again.
+</details>
+
+<details>
+<summary><b>How do I get fresh numbers?</b></summary>
+
+Results are reused for 24 hours on the same patch. Untick **Use saved results** to scrape everything again.
+</details>
+
+<details>
+<summary><b>Where does the app keep its files?</b></summary>
+
+| What | Where |
+|---|---|
+| Excel files | `Documents\LoL Matchup Checker` |
+| Settings, saved results, champion icons | `%LOCALAPPDATA%\lol-matchup-checker` |
+| Browser (downloaded once) | `%LOCALAPPDATA%\ms-playwright` |
+
+To remove everything, delete the .exe and those folders.
+</details>
+
+<details>
+<summary><b>The app starts slowly</b></summary>
+
+A one-file .exe unpacks itself on every start, which takes a few seconds. After that it's quick.
+</details>
+
+<details>
+<summary><b>A champion I want isn't on the list for a lane</b></summary>
+
+By default, only champions picked in at least 0.5% of that lane's games are checked, the same as u.gg's tier list. Lower **Min pick %** (0 = everyone).
+</details>
+
+---
+
+## 🧑‍💻 For developers
+
+<details>
+<summary><b>Run from source</b></summary>
+
+Needs Python 3.10+.
 
 ```bash
 git clone https://github.com/MrVaxiZ/Lol-Matchup-Checker
 cd Lol-Matchup-Checker
-python -m venv .venv
-# Windows: .venv\Scripts\activate    Linux/macOS: source .venv/bin/activate
-pip install -e .
-scrapling install        # one-time download of the browser Scrapling drives
+pip install -r requirements.txt
+scrapling install          # one-time browser download
 ```
 
-### 🧪 Run
+Then double-click **`gui.cmd`**, or run `python -m lol_matchup_checker.gui`.
+</details>
+
+<details>
+<summary><b>Command line</b></summary>
 
 ```bash
-lol-matchup gen --lane top --champs vlad darius ww
-# or, without installing the command:
-python -m lol_matchup_checker gen --lane top --champs vlad darius ww
+# Matchup sheet: your champions vs every jungler -> Matchups.xlsx
+python -m lol_matchup_checker gen --lane jg --champs elise j4 robal sylas
+
+# Counters: who beats Darius (role auto-detected) -> Counters.xlsx
+python -m lol_matchup_checker.counters darius
+python -m lol_matchup_checker.counters vlad --lane mid --top 15
+
+# List champion aliases
+python -m lol_matchup_checker alias
 ```
 
----
+After `pip install -e .` the shortcuts `lol-matchup`, `lol-counters` and `lol-matchup-gui` work too.
 
-## 🧾 Command Line Arguments
+| Option | What it does | Default |
+|---|---|---|
+| `--lane` | `top`, `jg`, `mid`, `adc`, `sup` (counters: optional, auto-detected) | |
+| `--patch 26.18` | Data for a specific patch | latest |
+| `--min-pick-rate` | Only check opponents picked in at least this % of games | `0.5` |
+| `--workers` | Pages loaded in parallel; lower it if you get blocked | `4` |
+| `--no-cache` / `--cache-hours` | Ignore saved results / how long they stay fresh | `24` h |
+| `--show-browser` / `--real-chrome` | Help against Cloudflare | off |
+| `--out` | Excel file path | `Matchups.xlsx` / `Counters.xlsx` |
+| `--top` / `--min-matches` | *Counters:* how many to print / low-sample cutoff | `10` / `100` |
+| `--retries` / `--timeout` / `--debug` | Attempts per page / seconds per page / save failing pages to `./debug` | `3` / `60` / off |
+</details>
 
-| Argument          | Description                                                                 | Example                     |
-|-------------------|-----------------------------------------------------------------------------|-----------------------------|
-| `gen`             | Main command, generates the Excel file.                                     | `gen`                       |
-| `--lane`/`--role` | Required. `top`, `jg`/`jng`/`jungle`, `mid`, `adc`/`bot`, `sup`/`support`  | `--lane mid`                |
-| `--champs`        | Required. Champions you play (names or aliases).                            | `--champs lb vlad`          |
-| `--out`           | Output Excel path (default `Matchups.xlsx`).                                | `--out "C:\mid_champs.xlsx"`|
-| `--patch`         | Patch to pull data for (default: latest).                                  | `--patch 26.18`             |
-| `--min-pick-rate` | Only opponents picked in at least this % of the lane's games (default 0.5, same as u.gg's tier list; 0 = everyone). | `--min-pick-rate 1` |
-| `--workers`       | Pages scraped in parallel (default 4). Lower it if you get blocked.         | `--workers 2`               |
-| `--retries`       | Attempts per page (default 3).                                              | `--retries 5`               |
-| `--timeout`       | Seconds per page (default 60).                                              | `--timeout 90`              |
-| `--show-browser`  | Run the browser visibly; try it if Cloudflare keeps blocking headless mode. | `--show-browser`            |
-| `--real-chrome`   | Use your installed Google Chrome instead of the bundled Chromium.           | `--real-chrome`             |
-| `--browser-path`  | Use a specific Chrome/Chromium executable.                                  | `--browser-path "C:\...\chrome.exe"` |
-| `--no-block-ads`  | Don't block ad/tracker requests (blocked by default for speed).             | `--no-block-ads`            |
-| `--debug`         | Verbose logs; saves HTML of failed pages into `./debug`.                    | `--debug`                   |
-| `alias`           | Lists all available aliases.                                                | `alias`                     |
+<details>
+<summary><b>Build the .exe</b></summary>
 
----
+- **On your PC:** double-click **`build_exe.cmd`**. It produces `dist\LoL Matchup Checker.exe` and runs a self-test.
+- **Automatically:** push a tag like `v2.1.0`. GitHub Actions (`.github/workflows/build-exe.yml`) builds the exe on Windows and attaches it to the release as `LoL-Matchup-Checker.exe`, which is the file the download link above points to.
 
-## 📂 Output
+The icon is drawn by `packaging/make_icon.py`. `"LoL Matchup Checker.exe" --selftest` writes `selftest.txt` listing what was bundled.
+</details>
 
-- Saved to `Matchups.xlsx` in the current directory (or `--out`). Cell A1 shows which patch the data is from.
-- **Matchups** sheet: one row per champion on the lane's tier list (A–Z), one column per champion you play, each cell a rating. Hover a cell to see the win rate and number of matches.
-- **Raw Data** sheet: every scraped matchup with win rate, matches and rating, filterable.
-- Matchups that couldn't be scraped, and your champion against itself, are `N/A`.
+<details>
+<summary><b>How it works</b></summary>
 
-### 📘 Excel Legend
+1. Opens the lane's u.gg tier list with [Scrapling](https://github.com/D4Vinci/Scrapling)'s stealth browser, which gets through Cloudflare. It reads the data embedded in the page: every champion in every role, with pick rates and the current patch.
+2. For each matchup it opens `u.gg/lol/champions/<enemy>/build/<lane>?opp=<champion>` and reads **Win Rate** and **Matches**. That page shows the enemy's win rate, so yours is `100 − value`.
+3. "A vs B" and "B vs A" are the same page seen from both sides, so each pair is loaded once. Results are saved per patch and lane and reused for 24 hours.
+4. Several browser tabs share one Cloudflare clearance and run in parallel.
+</details>
 
-| Symbol | Meaning                  | Your win rate      |
-|--------|--------------------------|--------------------|
-| `-`    | Do not pick this champ.  | below 49%          |
-| `S`    | Skill-based matchup.     | 49%–51%            |
-| `+`    | Can pick this champ.     | 51%–53%            |
-| `D`    | Distinguished pick.      | 53%–55%            |
-| `D+`   | Distinguished pick plus. | 55%–60%            |
-| `UD`   | Ultra Distinguished.     | 60% and above      |
-
----
-
-## 🗃️ File Structure
+<details>
+<summary><b>Project layout and tests</b></summary>
 
 ```
 lol_matchup_checker/
-├── cli.py       # `gen` / `alias` commands
-├── scraper.py   # Scrapling stealth session, retries, Cloudflare handling
-├── parsing.py   # u.gg HTML parsing (tier list + matchup stats)
-├── models.py    # Matchup, ratings, champion-name resolution
-├── data.py      # lanes, URLs, aliases, URL slugs
-└── excel.py     # Excel export (openpyxl)
-tests/           # offline tests: pytest
+├── gui.py        desktop app
+├── cli.py        `gen` / `alias` commands (matchup sheet)
+├── counters.py   counter finder
+├── scraper.py    u.gg scraping (Scrapling), retries, Cloudflare
+├── parsing.py    reading u.gg pages
+├── cache.py      saved results
+├── browser.py    first-run browser download
+├── excel.py      Excel export
+├── models.py     ratings, champion names
+├── data.py       lanes, aliases, URLs, patches
+└── assets/       app icon
+packaging/        .exe build (PyInstaller spec, entry script, icon)
+tests/            offline tests, no internet needed
 ```
 
----
-
-## 🧠 How it works
-
-1. Opens the lane's u.gg tier list with Scrapling (`solve_cloudflare=True`) and reads the data u.gg embeds in the page (the same `champion_ranking` feed the site is built from): every champion with games in that lane, with pick rate and match count. Champions picked in at least `--min-pick-rate` % of games become the opponents, which by default is exactly u.gg's own list. If that data is ever missing, it falls back to reading the page itself.
-2. For each *(your champ, enemy champ)* pair it opens `u.gg/lol/champions/<enemy>/build/<lane>?opp=<your champ>` and reads **Win Rate** and **Matches** from the stats bar. That page shows the enemy's win rate, so your win rate is `100 − value`.
-3. `--patch 26.18` is sent to u.gg as `patch=16_18` (u.gg's internal patch number) on every page, and the patch u.gg actually served is checked and written into cell A1.
-4. Pages share one browser (and its Cloudflare clearance cookie); up to `--workers` tabs run at once.
+Run the tests with `pip install pytest` and then `pytest`.
+</details>
 
 ---
 
-## 🔍 Troubleshooting
+<p align="center">
+  Made by <a href="https://github.com/MrVaxiZ">MrVaxiZ</a> · MIT License · GLHF on the Rift!<br>
+  <sub>Not affiliated with Riot Games or u.gg. Champion icons © Riot Games.</sub>
+</p>
 
-- **Blocked / stuck on "Just a moment…"**: try `--show-browser`, `--real-chrome`, and/or fewer `--workers`.
-- **Many `N/A` cells**: run with `--debug` and open the HTML in `./debug`. If u.gg changed its page layout, the selectors live in `parsing.py`.
-- **Champion not recognized**: it must be on the u.gg tier list for that lane. Run `lol-matchup alias` for shortcuts.
-
-Run the tests with `pip install -e ".[dev]"` then `pytest`.
-
----
-
-## 📜 License
-
-This project is released under the MIT License. Do whatever you want with it, but give credit if you use it publicly.
-
-## 👤 Author
-
-Made by [MrVaxiZ](https://github.com/MrVaxiZ)
-Inspired by the need for accurate matchup prep for ranked games.
-
-**GLHF on the Rift!**
+<!-- TODO: replace # below with your Buy Me a Coffee link, e.g. https://buymeacoffee.com/yourname -->
+<p align="center">
+  <sub>☕ If you enjoy the app and would like to support me, <a href="#"><b>buy me a coffee</b></a>! 💛✨</sub>
+</p>

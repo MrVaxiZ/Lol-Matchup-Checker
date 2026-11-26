@@ -12,6 +12,7 @@ from pathlib import Path
 
 from scrapling.fetchers import AsyncStealthySession
 
+from .cache import MatchupCache, pair_key
 from .data import Lane, champion_slug, fetch_known_champion_names, with_patch
 from .models import Matchup, merge_tier_list
 from .parsing import (
@@ -29,6 +30,45 @@ class ScrapeError(Exception):
     pass
 
 
+def _quiet_route_errors() -> None:
+    """Stop harmless ad-blocker race errors from spamming the log and poisoning the next browser call.
+
+    Scrapling blocks ads by intercepting every request (page.route). Browser tabs are reused, so
+    when a tab moves on to the next matchup, ad requests from the previous page can still be in
+    flight; continuing/aborting them then fails with "Route.continue_: Assertion error". Patchright
+    prints that as "Error occurred in event listener" and, worse, re-raises it on the *next* browser
+    call (which can make a good matchup page fail and be retried). The request is moot by then, so
+    the error is safe to drop inside the handler, before patchright ever sees it.
+    """
+    import sys
+
+    def wrap(original):
+        if getattr(original, "_lmc_safe", False):
+            return original
+
+        def factory(*args, **kwargs):
+            handler = original(*args, **kwargs)
+
+            async def safe_handler(route):
+                try:
+                    await handler(route)
+                except Exception as exc:  # page moved on / closed: nothing left to block or continue
+                    logging.getLogger(__name__).debug("ignored route error: %s", exc)
+
+            return safe_handler
+
+        factory._lmc_safe = True
+        return factory
+
+    try:
+        import scrapling.engines.toolbelt.navigation  # noqa: F401  (make sure the modules are loaded)
+    except Exception:
+        return
+    for name, module in list(sys.modules.items()):
+        if name.startswith("scrapling.") and hasattr(module, "create_async_intercept_handler"):
+            module.create_async_intercept_handler = wrap(module.create_async_intercept_handler)
+
+
 @dataclass
 class ScraperOptions:
     workers: int = 4  # browser tabs open at once
@@ -42,6 +82,9 @@ class ScraperOptions:
     debug_dir: Path = Path("debug")
     patch: str | None = None  # e.g. "26.18"; None = whatever u.gg shows by default (latest)
     min_pick_rate: float = 0.5  # % of games in the lane; 0.5 matches u.gg's own tier list
+    use_cache: bool = True  # reuse matchups scraped earlier on the same patch
+    cache_hours: float = 24.0  # ...if they're at most this old
+    cache_path: Path | None = None  # default: %LOCALAPPDATA%\lol-matchup-checker\matchup_cache.json
 
 
 # ----------------------------------------------------------------- page actions
@@ -207,6 +250,8 @@ class UggScraper:
         self.patch_shown: str | None = None  # patch u.gg says it's showing (from the tier list title)
         self.patch_mismatch = False
         self.lane_all_champions: list[str] = []  # everyone with games in the lane, incl. below the pick-rate cutoff
+        self.last_tier_page = None  # last tier-list page fetched; its embedded data covers every role
+        self._cache: MatchupCache | None = None
         logging.getLogger("scrapling").setLevel(logging.WARNING if options.debug else logging.CRITICAL)
 
     async def __aenter__(self) -> "UggScraper":
@@ -221,8 +266,22 @@ class UggScraper:
         )
         if self.opt.executable_path:
             kwargs["executable_path"] = self.opt.executable_path
+        _quiet_route_errors()
+        from .browser import use_shared_browser_folder
+
+        use_shared_browser_folder()
         self._session = AsyncStealthySession(**kwargs)
-        await self._session.__aenter__()
+        try:
+            await self._session.__aenter__()
+        except Exception as exc:
+            from .browser import install_browser, looks_like_missing_browser
+
+            if self.opt.real_chrome or self.opt.executable_path or not looks_like_missing_browser(exc):
+                raise
+            # First run of the .exe (or `scrapling install` was never run): get the browser, try again.
+            await asyncio.to_thread(install_browser, self.log)
+            self._session = AsyncStealthySession(**kwargs)
+            await self._session.__aenter__()
         return self
 
     async def __aexit__(self, *exc) -> None:
@@ -288,6 +347,7 @@ class UggScraper:
                 if is_cloudflare_challenge(page):
                     last_error = "still on the Cloudflare challenge page"
                 else:
+                    self.last_tier_page = page
                     # 1) u.gg's own data embedded in the page: every champion, with pick rates
                     tier_data = parse_tier_list_data(page, lane.value)
                     if tier_data and tier_data.entries:
@@ -371,30 +431,84 @@ class UggScraper:
 
     # --------------------------------------------------------------- matchups
 
+    def _matchup_cache(self) -> MatchupCache | None:
+        if not self.opt.use_cache or not self.patch_shown:
+            return None  # without a known patch, saved results can't be matched safely
+        if self._cache is None:
+            self._cache = MatchupCache(self.opt.cache_path, self.opt.cache_hours)
+        return self._cache
+
     async def get_matchups(self, lane: Lane, lane_champions: list[str], my_champs: list[str]) -> tuple[list[Matchup], list[tuple[str, str, str]]]:
-        """Scrape every (my champ vs lane champ) pair. Returns (matchups, failures)."""
+        """Every (my champ vs lane champ) pair. Returns (matchups, failures).
+
+        Pages are only opened for pairs that aren't saved from an earlier run on this patch, and
+        only once per pair: "A vs B" and "B vs A" are the same u.gg page seen from opposite sides.
+        """
         jobs = [(against, playing) for playing in my_champs for against in lane_champions if against != playing]
-        total = len(jobs)
-        self.log(f"Scraping {total} matchups with {self.opt.workers} parallel tabs...")
-
-        semaphore = asyncio.Semaphore(max(1, self.opt.workers))
-
-        async def run(against: str, playing: str):
-            async with semaphore:
-                return against, playing, await self._fetch_matchup(lane, against, playing)
+        cache = self._matchup_cache()
+        patch = self.patch_shown or ""
 
         matchups: list[Matchup] = []
         failures: list[tuple[str, str, str]] = []
-        done = 0
-        for future in asyncio.as_completed([run(a, p) for a, p in jobs]):
-            against, playing, result = await future
-            done += 1
-            if isinstance(result, Matchup):
-                matchups.append(result)
-                self.log(f"[{done}/{total}] {playing} vs {against} : [{result.win_rate}%] WR, [{result.matches}] Matches")
+        to_fetch: dict[str, tuple[str, str]] = {}  # pair key -> (against, playing)
+        mirrored: list[tuple[str, str, str]] = []  # (against, playing, pair key) answered by the reverse page
+        from_cache = 0
+        for against, playing in jobs:
+            if cache is not None:
+                hit = cache.get(patch, lane.value, playing, against)
+                if hit is not None:
+                    matchups.append(hit)
+                    from_cache += 1
+                    continue
+            key, _ = pair_key(patch, lane.value, playing, against)
+            if key in to_fetch:
+                mirrored.append((against, playing, key))
             else:
-                failures.append((playing, against, result))
-                self.log(f"[{done}/{total}] {playing} vs {against} : FAILED ({result})")
+                to_fetch[key] = (against, playing)
+
+        total = len(to_fetch)
+        notes = []
+        if from_cache:
+            notes.append(f"{from_cache} loaded from saved results")
+        if mirrored:
+            notes.append(f"{len(mirrored)} mirrored from the opposite matchup")
+        if total:
+            self.log(f"Scraping {total} matchups with {self.opt.workers} parallel tabs"
+                     + (f" ({', '.join(notes)})" if notes else "") + "...")
+        else:
+            self.log(f"All {len(jobs)} matchups loaded from saved results (patch {patch}), nothing to scrape.")
+
+        semaphore = asyncio.Semaphore(max(1, self.opt.workers))
+
+        async def run(key: str, against: str, playing: str):
+            async with semaphore:
+                return key, against, playing, await self._fetch_matchup(lane, against, playing)
+
+        results: dict[str, Matchup | str] = {}
+        done = 0
+        try:
+            for future in asyncio.as_completed([run(k, a, p) for k, (a, p) in to_fetch.items()]):
+                key, against, playing, result = await future
+                done += 1
+                results[key] = result
+                if isinstance(result, Matchup):
+                    matchups.append(result)
+                    if cache is not None:
+                        cache.put(patch, lane.value, result)
+                    self.log(f"[{done}/{total}] {playing} vs {against} : [{result.win_rate}%] WR, [{result.matches}] Matches")
+                else:
+                    failures.append((playing, against, result))
+                    self.log(f"[{done}/{total}] {playing} vs {against} : FAILED ({result})")
+        finally:
+            if cache is not None:
+                cache.save()  # keep what was scraped even if the run is stopped halfway
+
+        for against, playing, key in mirrored:
+            original = results.get(key)
+            if isinstance(original, Matchup):
+                matchups.append(Matchup(playing, against, original.matches, round(100.0 - original.win_rate, 2)))
+            else:
+                failures.append((playing, against, original or "not scraped"))
         return matchups, failures
 
     async def _fetch_matchup(self, lane: Lane, against: str, playing: str) -> Matchup | str:

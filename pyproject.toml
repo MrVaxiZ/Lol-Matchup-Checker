@@ -13,6 +13,7 @@ requires-python = ">=3.10"
 dependencies = [
     "scrapling[fetchers]>=0.4.15",
     "openpyxl>=3.1",
+    "Pillow>=10",
 ]
 
 [project.optional-dependencies]
@@ -20,6 +21,13 @@ dev = ["pytest"]
 
 [project.scripts]
 lol-matchup = "lol_matchup_checker.cli:main"
+lol-counters = "lol_matchup_checker.counters:main"
+
+[project.gui-scripts]
+lol-matchup-gui = "lol_matchup_checker.gui:main"
 
 [tool.setuptools]
 packages = ["lol_matchup_checker"]
+
+[tool.setuptools.package-data]
+lol_matchup_checker = ["assets/*.png"]
