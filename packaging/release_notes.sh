@@ -40,6 +40,13 @@ Download it, double-click it, done. No Python and nothing else to install.
 > - The first time you press **START**, the app downloads its browser (one time, about 150 MB).
 > - **"Windows protected your PC"?** Click **More info → Run anyway**. The app isn't code-signed.
 
+EOF
+# VirusTotal result written by packaging/virustotal_scan.py (only when the scan ran)
+if [ -s virustotal.md ]; then
+  tr -d '\r' < virustotal.md
+  echo
+fi
+cat <<EOF
 ## ✨ What's new
 
 ${CHANGES}

@@ -1,8 +1,9 @@
 # Builds "LoL-Matchup-Checker.exe" on Windows and publishes a GitHub release.
-# - Run release.cmd (or push a tag like v2.1.0): builds the exe, writes the release notes
-#   (download section + what changed since the last version + checksum) and publishes the release.
+# - Run release.cmd (or push a tag like v2.1.0): builds the exe, scans it on VirusTotal, writes the
+#   release notes (download section + scan result + what changed + checksum) and publishes the release.
 #   The README's download link always points at the newest release.
 # - Or run it by hand from the Actions tab: only builds, the exe is kept as a downloadable artifact.
+# The VirusTotal step runs only if the repository has a VT_API_KEY secret (see the README).
 name: Build exe
 
 on:
@@ -16,6 +17,8 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      VT_API_KEY: ${{ secrets.VT_API_KEY }}  # empty if the secret isn't set: the scan is skipped
     steps:
       - uses: actions/checkout@v7
         with:
@@ -48,6 +51,12 @@ jobs:
         with:
           name: LoL-Matchup-Checker
           path: dist/LoL-Matchup-Checker.exe
+
+      - name: VirusTotal scan
+        if: startsWith(github.ref, 'refs/tags/') && env.VT_API_KEY != ''
+        continue-on-error: true  # a VirusTotal problem must never block a release
+        timeout-minutes: 20
+        run: python packaging/virustotal_scan.py dist/LoL-Matchup-Checker.exe --out virustotal.md --wait 900
 
       - name: Write release notes
         if: startsWith(github.ref, 'refs/tags/')

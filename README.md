@@ -156,6 +156,7 @@ After `pip install -e .` the shortcuts `lol-matchup`, `lol-counters` and `lol-ma
 
 - **On your PC:** double-click **`build_exe.cmd`**. It produces `dist\LoL Matchup Checker.exe` and runs a self-test.
 - **Publish a release:** commit your changes, then double-click **`release.cmd`** and type the new version (e.g. `2.1.0`). It updates the version number, commits, tags and pushes. GitHub Actions (`.github/workflows/build-exe.yml`) then builds the exe on Windows, writes the release notes (download section, your commit messages since the last version, a checksum) and publishes the release as `LoL-Matchup-Checker.exe`, which is the file the download link above points to.
+- **VirusTotal scan (optional):** get a free API key at [virustotal.com](https://www.virustotal.com) (sign up, then your profile → *API key*) and add it on GitHub under **Settings → Secrets and variables → Actions → New repository secret** with the name `VT_API_KEY`. Every release then gets scanned, and the result with a link goes into the release notes. Without the secret, this step is skipped.
 
 The icon is drawn by `packaging/make_icon.py`. `"LoL Matchup Checker.exe" --selftest` writes `selftest.txt` listing what was bundled.
 </details>
