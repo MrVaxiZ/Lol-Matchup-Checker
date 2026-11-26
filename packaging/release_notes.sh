@@ -10,7 +10,7 @@ set -euo pipefail
 TAG="$1"
 EXE="$2"
 REPO="https://github.com/MrVaxiZ/Lol-Matchup-Checker"
-SUPPORT_URL="#"  # TODO: your Buy Me a Coffee link
+SUPPORT_URL="https://buymeacoffee.com/vaxiz"
 
 PREV="$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)"
 if [ -n "$PREV" ]; then

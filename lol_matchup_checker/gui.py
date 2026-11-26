@@ -55,9 +55,7 @@ C = {
 LANES = [("top", "TOP"), ("jg", "JUNGLE"), ("mid", "MID"), ("adc", "ADC"), ("sup", "SUPPORT")]
 DDRAGON = "https://ddragon.leagueoflegends.com"
 
-# TODO: put your "Buy me a coffee" page here, e.g. "https://buymeacoffee.com/yourname".
-# While it's empty the line is still shown, but clicking it does nothing.
-SUPPORT_URL = ""
+SUPPORT_URL = "https://buymeacoffee.com/vaxiz"
 
 
 def _cache_dir() -> Path:
