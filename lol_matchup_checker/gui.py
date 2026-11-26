@@ -739,10 +739,6 @@ class App:
         self.search.trace_add("write", lambda *a: self._filter_tiles())
         entry.focus_set()
 
-        tk.Checkbutton(row, text="Remember my picks", variable=self.remember, command=self._save_remembered,
-                       bg=C["bg"], fg=C["text"], selectcolor=C["card"], activebackground=C["bg"],
-                       activeforeground=C["gold"], font=self.f["body"], highlightthickness=0, bd=0,
-                       cursor="hand2").pack(side="right")
         self.sel_strip = tk.Frame(row, bg=C["bg"])
         self.sel_strip.pack(side="left", fill="x", expand=True, padx=(self.px(14), 0))
 
@@ -772,11 +768,14 @@ class App:
         self._opt_entry(opts, "Min pick %", v["min_pick"], 4)
         if counters_mode:
             self._opt_entry(opts, "Min games", v["min_matches"], 5)
-        for key, label in (("cache", "Use saved results (24h)"), ("sound", "Sound when done"),
-                           ("show_browser", "Show browser"), ("real_chrome", "Use my Chrome")):
-            tk.Checkbutton(checks, text=label, variable=v[key], bg=C["panel"], fg=C["text"], selectcolor=C["card"],
-                           activebackground=C["panel"], activeforeground=C["text"], font=self.f["body"],
-                           highlightthickness=0, bd=0).pack(side="left", padx=(self.px(10), 0))
+        options = [("Remember my picks", self.remember, self._save_remembered)]
+        options += [(label, v[key], None) for key, label in (
+            ("cache", "Use saved results (24h)"), ("sound", "Sound when done"),
+            ("show_browser", "Show browser"), ("real_chrome", "Use my Chrome"))]
+        for label, var, command in options:
+            tk.Checkbutton(checks, text=label, variable=var, command=command, bg=C["panel"], fg=C["text"],
+                           selectcolor=C["card"], activebackground=C["panel"], activeforeground=C["text"],
+                           font=self.f["body"], highlightthickness=0, bd=0).pack(side="left", padx=(self.px(10), 0))
 
         go = tk.Frame(bottom, bg=C["panel"])
         go.pack(side="right", padx=self.px(18), pady=self.px(8))

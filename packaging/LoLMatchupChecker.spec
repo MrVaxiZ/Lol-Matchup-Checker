@@ -23,10 +23,18 @@ a = Analysis(
     datas=datas,
     binaries=binaries,
     hiddenimports=hiddenimports,
-    # Scrapling also supports plain Playwright, IPython shells and AI tools; this app needs none of them.
-    excludes=["playwright", "IPython", "mcp", "markdownify", "pytest", "matplotlib", "numpy", "pandas"],
+    # Scrapling's optional IPython shell and AI tools aren't used by this app.
+    excludes=["IPython", "mcp", "markdownify", "pytest", "matplotlib", "numpy", "pandas"],
     noarchive=False,
 )
+# Scrapling 0.4.x imports `playwright` (for type names); the browser itself is always started through
+# patchright. Keep playwright's Python code but drop its ~130 MB Node driver, which is never run.
+def _not_playwright_driver(entry):
+    dest = entry[0].replace("\\", "/")
+    return not dest.startswith("playwright/driver/")
+
+a.datas = [e for e in a.datas if _not_playwright_driver(e)]
+a.binaries = [e for e in a.binaries if _not_playwright_driver(e)]
 pyz = PYZ(a.pure)
 
 exe = EXE(
