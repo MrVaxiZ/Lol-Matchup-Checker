@@ -199,7 +199,6 @@ Run the tests with `pip install pytest` and then `pytest`.
   <sub>Not affiliated with Riot Games or u.gg. Champion icons © Riot Games.</sub>
 </p>
 
-<!-- TODO: replace # below with your Buy Me a Coffee link, e.g. https://buymeacoffee.com/yourname -->
 <p align="center">
-  <sub>☕ If you enjoy the app and would like to support me, <a href="#"><b>buy me a coffee</b></a>! 💛✨</sub>
+  <sub>☕ If you enjoy the app and would like to support me, <a href="[#](https://buymeacoffee.com/vaxiz?new=1)"><b>buy me a coffee</b></a>! 💛✨</sub>
 </p>
