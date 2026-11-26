@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lol-matchup-checker"
-version = "2.1.1"
+version = "2.1.2"
 description = "Scrapes League of Legends matchup win rates from u.gg (through Cloudflare, via Scrapling) into an Excel sheet."
 readme = "README.md"
 license = {text = "MIT"}
