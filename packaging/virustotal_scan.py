@@ -73,8 +73,8 @@ def markdown(sha256: str, stats: dict | None) -> str:
     if flagged == 0:
         return f"> 🛡️ **VirusTotal: clean.** 0 of {total} antivirus engines flagged it. [See the scan]({link})"
     return (f"> 🛡️ **VirusTotal:** {flagged} of {total} antivirus engines flagged it. [See the scan]({link})\n"
-            "> Apps packaged with PyInstaller often get a few false alarms like this; "
-            "the full source code is in this repository.")
+            "> Apps packaged with PyInstaller often get a few false alarms like this. "
+            "The full source code is in this repository.")
 
 
 def main(argv: list[str]) -> int:
